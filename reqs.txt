@@ -1,0 +1,4 @@
+nltk
+torchvision
+scikit-learn
+matplotlib
