@@ -9,8 +9,8 @@ from gameEnv import DEBUG_MODE, TRAINING
 import torch.optim as optim
 
 EPS_START = 1
-EPS_END = 0.0001
-EPS_DECAY = 0.0001
+EPS_END = 0.01
+EPS_DECAY = 0.000001
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,16 +21,10 @@ class DNN(nn.Module):
         # DNN setup
         self.fc1 = nn.Linear(in_features=len(all_possible_characters), 
             out_features=64)
-        self.fc2 = nn.Linear(in_features=64, out_features=64)
-        self.fc3 = nn.Linear(in_features=64, out_features=64)
-        self.fc4 = nn.Linear(in_features=64, out_features=32)
-        self.out = nn.Linear(in_features=32, out_features=len(possible_actions))
+        self.out = nn.Linear(in_features=64, out_features=len(possible_actions))
 
     def forward(self, t):
         t = F.relu(self.fc1(t))
-        t = F.relu(self.fc2(t))
-        t = F.relu(self.fc3(t))
-        t = F.relu(self.fc4(t))
         t = self.out(t)
         return t
 
@@ -83,7 +77,7 @@ class PickQuestionDNN():
             self.current_state_net = DNN(self.possible_actions).to(device)
             self.next_state_net = DNN(self.possible_actions).to(device)
 
-        self.optimizer = optim.SGD(params=self.current_state_net.parameters(), lr=0.0001)
+        self.optimizer = optim.SGD(params=self.current_state_net.parameters(), lr=0.001)
 
     def pick_random_question_index(self):
         question_index = random.randrange(len(self.possible_actions))
@@ -115,7 +109,10 @@ class PickQuestionDNN():
         next_q_values = self.get_next_q_val(next_states, game_status)
 
         rewards = torch.full_like(actions, -1)
-        # num_eliminated = len(all_possible_characters) - torch.sum(next_state)
+        for i in range(len(next_states)):
+            num_eliminated = len(all_possible_characters) - torch.sum(next_states[i])
+            rewards[i] = num_eliminated
+
         # rewards = torch.tensor([num_eliminated])
 
         # Bellman equation
@@ -148,5 +145,5 @@ class PickQuestionDNN():
                self.current_state_net.state_dict()
             )
         for param_group in self.optimizer.param_groups:
-            param_group['lr'] = .95*param_group['lr']
+            param_group['lr'] = 1.01*param_group['lr']
             
