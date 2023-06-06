@@ -21,5 +21,5 @@ if start != 2:
         human_answer = input("Your choice, Yes, No: ")
         machine.take_answer(human_answer)
         # game_status is either None, Won or Lost
-        if machine.game_status is not None:
+        if machine.game_status != 0:
             game_ongoing = False

@@ -76,7 +76,7 @@ class PickQuestionDNN():
     def loadNN(self):
         # Get the previously stored policy net
         try:
-            current_state_net = torch.load("./machineBrain/current_state_net.pt")
+            current_state_net = torch.load("./machineBrain/trainedNet.pt")
     
             if current_state_net:
                 self.next_state_net = DNN(self.possible_actions).to(device)

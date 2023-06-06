@@ -40,7 +40,7 @@ class MachineTrainer():
         self.batch_size = BATCH_SIZE
         self.memory = []
         self.machine_player_1 = MachinePlayer()
-        self.machine_player_2 = MachinePlayer()
+        self.machine_player_2 = OraclePlayer()
 
     def sample_experience(self):
         sample = random.sample(self.memory, self.batch_size)
