@@ -1,7 +1,7 @@
 import random
 import torch
 import math
-from gameEnv import all_possible_characters
+from gameEnv import all_possible_characters, DEBUG_MODE, question_bank
 
 # Takes an answer and eliminate characters, returning remaining characters as state
 class TakeAnswerBrain():
@@ -16,7 +16,7 @@ class TakeAnswerBrain():
         self.remaining_characters = torch.ones(len(all_possible_characters))
 
     def eliminate_char(self, question_asked_index: int, answer_binary: int):
-        for i, (char_name, char_attributes) in enumerate(all_possible_characters.items()):
+      for i, (char_name, char_attributes) in enumerate(all_possible_characters.items()):
             if question_asked_index < len(char_attributes) and char_attributes[question_asked_index] != answer_binary:
                 self.remaining_characters[i] = 0
         #print("Remaining characters are "+str(self.remaining_characters))

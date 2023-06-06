@@ -1,7 +1,7 @@
 from humanPlayer import HumanPlayer
 from machinePlayer import MachinePlayer
 
-machine = MachinePlayer(game_mode=True)
+machine = MachinePlayer()
 human = HumanPlayer()
 
 print(machine)
@@ -19,6 +19,7 @@ if start != 2:
         qindex, machine_question_text = machine.ask_question()
         print(f"Machine: {machine_question_text}")
         human_answer = input("Your choice, Yes, No: ")
-        next_state, done = machine.take_answer(human_answer)
-        if done:
+        machine.take_answer(human_answer)
+        # game_status is either None, Won or Lost
+        if machine.game_status is not None:
             game_ongoing = False

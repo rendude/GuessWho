@@ -1,3 +1,9 @@
+GAME_MODE = False
+DEBUG_MODE = True
+TRAINING = True
+DEBUG_CHAR = "George"
+
+
 unsorted_characters = {
     "Alex": [1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0],
     "Alfred": [1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0],
@@ -28,6 +34,7 @@ unsorted_characters = {
 all_possible_characters = dict(sorted(unsorted_characters.items()))
 
 
+# 27 real questions and 11 fake, 38 total
 question_bank = [
     "Are they a man / male?",
     "Are they bald?",
@@ -54,7 +61,7 @@ question_bank = [
     "Are they sad?",
     "Do they have facial hair?",
     "Do they have earrings?",
-    "Are they a girl / female?"
+    "Are they a girl / female?",
     "Are they old?",
     "Who are they?",
     "What do they do?",
@@ -68,3 +75,74 @@ question_bank = [
     "Do they seem rich?",
     "Do they look like a cat?"
 ]
+
+oracle_question_sequence = {
+    "Do they have a big mouth?": {
+        'yes': "Do they have black hair?", 
+        'no': "Do they have curly hair?",
+    },
+
+    "Do they have black hair?": {
+        'yes': "Do they have a mustache?", 
+        'no': "Is their hair parted?",
+    },
+
+    "Do they have a mustache?": {
+    },
+
+    "Is their hair parted?": {
+        'yes': "Do they have white hair?", 
+        'no': "Do they have a beard?",
+    },
+
+    "Do they have white hair?": {
+        'yes': "Do they have a big nose?", 
+        'no': "Do they have blue eyes?",
+    },
+
+    "Do they have a beard?": { 
+        'no': "Do they have blonde hair / Are they blond?",
+    },
+
+    "Do they have curly hair?": { 
+        'yes': "Do they have red hair?",
+        'no': "Do they have long hair?"
+    },
+
+    "Do they have red hair?": { 
+        'yes': "Are they bald?",
+        'no': "Do they have earrings?"
+    },
+
+    "Do they have earrings?": { 
+    },
+
+    "Do they have blue eyes?": { 
+    },
+
+    "Do they have a big nose?": { 
+    },
+
+    "Do they have long hair?": { 
+        'yes': "Do they have blonde hair / Are they blond?",
+        'no': "Are they bald?"
+    },
+
+    "Do they have blonde hair / Are they blond?": { 
+        'no': "Do they have blue eyes?"
+    },
+
+    "Are they bald?": { 
+        'yes': "Do they have glasses?",
+        'no': "Do they have a hat?",
+    },
+
+    "Do they have glasses?": {
+        'yes': "Do they have blue eyes?",
+        'no': "Do they have red cheeks?"
+    },
+
+    "Do they have a hat?": {
+        'yes': "Are they sad?",
+    },
+}
