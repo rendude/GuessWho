@@ -1,5 +1,5 @@
 from machinePlayer import MachinePlayer
-from gameEnv import question_bank, oracle_question_sequence, all_possible_characters, GAME_MODE
+from gameEnv import question_bank, oracle_question_sequence, all_possible_characters, DEBUG_MODE
 
 
 class OraclePlayer(MachinePlayer):
@@ -20,8 +20,12 @@ class OraclePlayer(MachinePlayer):
         if self.total_questions_asked == 0:
             question_text = "Do they have a big mouth?"
         else:
+            if DEBUG_MODE:
+                print(f'Oracle prev question was {self.prev_ques_text} and answer recevied {self.answer_received}')
             question_text = oracle_question_sequence[self.prev_ques_text][self.answer_received]
 
+        if DEBUG_MODE:
+            print(f'Oracle asks {question_text}')
         q_index = question_bank.index(question_text)
         self.total_questions_asked += 1
         self.prev_ques_text = question_text
@@ -39,12 +43,19 @@ class OraclePlayer(MachinePlayer):
         next_state, is_done = self.take_answer_brain.take_answer(self.question_asked_index, answer_binary)
         self.state = next_state
 
+        if DEBUG_MODE:
+            for i, diff in enumerate(next_state):
+                if diff == 0:
+                    print(f'{list(all_possible_characters.keys())[i]} oracle eliminated')
+                if diff == 1:
+                    print(f'{list(all_possible_characters.keys())[i]} remains for oracle')
+
         if is_done:
             charIndex = (next_state == 1).nonzero()
             charName = list(all_possible_characters.keys())[charIndex]
             print("I know, your character is "+charName)
             self.game_status = 1
-        elif self.pick_question_brain.total_questions_asked > 20:
+        elif self.total_questions_asked > 20:
             # The bot is stuck in a loop and lost
             self.game_status = -1
 

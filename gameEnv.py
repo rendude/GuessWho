@@ -1,7 +1,7 @@
 GAME_MODE = False
-DEBUG_MODE = True
+DEBUG_MODE = False
 TRAINING = True
-DEBUG_CHAR = "George"
+DEBUG_CHAR = "Eric"
 
 
 unsorted_characters = {
@@ -129,6 +129,7 @@ oracle_question_sequence = {
     },
 
     "Do they have blonde hair / Are they blond?": { 
+        'yes': "Do they have a mustache?",
         'no': "Do they have blue eyes?"
     },
 

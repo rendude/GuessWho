@@ -38,7 +38,6 @@ class PickQuestionDNN():
     def __init__(self, possible_actions, asks_randomly):
         self.possible_actions = possible_actions
         self.current_step = 0
-        self.total_questions_asked = 0
         self.next_state_net = None
         self.current_state_net = None
         self.asks_randomly = asks_randomly
@@ -70,9 +69,6 @@ class PickQuestionDNN():
             print(f'Next q is {next_qs}')
         return next_qs
     
-    def reset(self):
-        self.total_questions_asked = 0
-
     def loadNN(self):
         # Get the previously stored policy net
         try:
@@ -87,7 +83,7 @@ class PickQuestionDNN():
             self.current_state_net = DNN(self.possible_actions).to(device)
             self.next_state_net = DNN(self.possible_actions).to(device)
 
-        self.optimizer = optim.SGD(params=self.current_state_net.parameters(), lr=0.001)
+        self.optimizer = optim.SGD(params=self.current_state_net.parameters(), lr=0.0001)
 
     def pick_random_question_index(self):
         question_index = random.randrange(len(self.possible_actions))
@@ -96,7 +92,6 @@ class PickQuestionDNN():
     def pick_next_question(self, state):
         # State is one-hot-coded remaining characteres' indeces
         self.current_step += 1
-        self.total_questions_asked += 1
 
         exploration_rate = self.get_exploration_rate(self.current_step)
         if self.asks_randomly or exploration_rate > random.random():

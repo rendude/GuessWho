@@ -40,7 +40,6 @@ class MachinePlayer():
             self.assign_char(DEBUG_CHAR)
         else:
             self.assign_char()
-        self.pick_question_brain.reset()
         self.take_answer_brain.reset()
         self.game_status = 0
         self.total_questions_asked=0
@@ -123,7 +122,7 @@ class MachinePlayer():
             if GAME_MODE:
                 print("I know, your character is "+charName)
             self.game_status = 1
-        elif self.pick_question_brain.total_questions_asked > 20:
+        elif self.total_questions_asked > 20:
             # The bot is stuck in a loop and lost
             self.game_status = -1
 

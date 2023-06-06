@@ -38,8 +38,8 @@ class MachineTrainer():
         self.push_count = 0
         self.batch_size = BATCH_SIZE
         self.memory = []
-        self.machine_player_1 = OraclePlayer()
-        self.machine_player_2 = MachinePlayer(asks_randomly=True)
+        self.machine_player_1 = MachinePlayer()
+        self.machine_player_2 = OraclePlayer()
 
     def sample_experience(self):
         sample = random.sample(self.memory, self.batch_size)
@@ -65,17 +65,14 @@ class MachineTrainer():
             for i, diff in enumerate(next_state):
                 if diff == 0:
                     print(f'{list(all_possible_characters.keys())[i]} was eliminated')
-
+                if diff == 1:
+                    print(f'{list(all_possible_characters.keys())[i]} remains')
 
         if self.machine_player_1.game_status == 0:
             # Player 2 gets to ask a question too in case they won
             action_2, question_text = self.machine_player_2.ask_question()
             answer = self.machine_player_1.take_question(question_text)
             self.machine_player_2.take_answer(answer)
-
-            if DEBUG_MODE:
-                print(f'Player 2 asked {question_text} #{action_2}')
-                print(f'Player 1 answered {answer}')
 
         return Experience(state, torch.tensor([action]), next_state, torch.FloatTensor([self.machine_player_1.game_status]))
         
@@ -108,22 +105,12 @@ class MachineTrainer():
                     # learn a little bit every time
                     #print("I can start learning now")
                     states, actions, next_states, player_1_game_status = self.sample_experience()
-                    if DEBUG_MODE:
-                        print(f"Batch size is {BATCH_SIZE}")
-                        for action in actions:
-                            print(f"machine 1 asked #{action.item()}: {question_bank[int(action.item())]}")
-                        print(f"Another eliminated {torch.sum(states) - torch.sum(next_states)} and they are")                        
-                        for i, diff in enumerate(states[0] - next_states[0]):
-                            if diff == 1:
-                                print(f'{list(all_possible_characters.keys())[i]} was eliminated')
-
-                        print(f"learn next states are "+ str(next_states))                        
 
                     # Backprop one step
                     self.machine_player_1.pick_question_brain.update_weights(states, actions, next_states, player_1_game_status)
 
                 # If game ended
-                if self.machine_player_1.game_status != 0:
+                if self.machine_player_1.game_status != 0 or self.machine_player_2.game_status != 0:
                     questions_asked = self.machine_player_1.total_questions_asked
                     num_ques_asked.append(questions_asked)
                     print(f"Game over, player 1's {self.machine_player_1.game_status} and {self.machine_player_1.state}. took {questions_asked} questions.")
