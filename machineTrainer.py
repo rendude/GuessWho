@@ -11,6 +11,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import os
 from gameEnv import all_possible_characters, question_bank, DEBUG_MODE, TRAINING, GAME_MODE, DEBUG_CHAR
+from collections import defaultdict
 
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -22,10 +23,10 @@ Experience = namedtuple(
     ('state', 'action', 'next_state', 'game_status')
 )
 
-MEMORY_SIZE = 1000000
-BATCH_SIZE = 100
-NUM_SIMULATED_GAMES = 6000
-TARGET_UPDATE = 10
+MEMORY_SIZE = 4000
+BATCH_SIZE = 200
+NUM_SIMULATED_GAMES = 2000
+TARGET_UPDATE = 20
 # Setting game_mode to true, prints out questions and answers
 
 if DEBUG_MODE:
@@ -39,7 +40,7 @@ class MachineTrainer():
         self.batch_size = BATCH_SIZE
         self.memory = []
         self.machine_player_1 = MachinePlayer()
-        self.machine_player_2 = OraclePlayer()
+        self.machine_player_2 = MachinePlayer()
 
     def sample_experience(self):
         sample = random.sample(self.memory, self.batch_size)
@@ -91,6 +92,8 @@ class MachineTrainer():
         num_ques_asked = []
         player_wins = 0
         player_win_rate = []
+        remaining_when_lost = defaultdict(int)
+        char_count = defaultdict(int)
 
         for episode in range(1, NUM_SIMULATED_GAMES+1):
             # print("Player 1")
@@ -111,11 +114,14 @@ class MachineTrainer():
 
                 # If game ended
                 if self.machine_player_1.game_status != 0 or self.machine_player_2.game_status != 0:
-                    questions_asked = self.machine_player_1.total_questions_asked
-                    num_ques_asked.append(questions_asked)
-                    print(f"Game over, player 1's {self.machine_player_1.game_status} and {self.machine_player_1.state}. took {questions_asked} questions.")
+                    #print(f"Game over, player 1's {self.machine_player_1.game_status} and {torch.sum(self.machine_player_1.state)} remaining. took {self.machine_player_1.total_questions_asked} questions.")
                     if self.machine_player_1.game_status == 1:
                         player_wins += 1
+
+                    remaining_when_lost[self.machine_player_2.given_char_name] += torch.sum(self.machine_player_1.state)
+                    char_count[self.machine_player_2.given_char_name] += 1
+                    questions_asked = self.machine_player_1.total_questions_asked
+                    num_ques_asked.append(questions_asked)
                     player_win_rate.append((player_wins/episode)*100)
                     self.plot_questions_asked(num_ques_asked, 100)
                     self.plot_win_rate(player_win_rate, 100)
@@ -125,6 +131,8 @@ class MachineTrainer():
                 self.machine_player_1.pick_question_brain.swap_neural_nets_for_stabilitiy()                
                 self.machine_player_2.pick_question_brain.swap_neural_nets_for_stabilitiy(
                     self.machine_player_1.pick_question_brain.current_state_net.state_dict())
+                if TRAINING:
+                    torch.save(trainer.machine_player_1.pick_question_brain.current_state_net, "./machineBrain/trainedNet.pt")
 
     def plot_qvalues(self, state=None):
         x = self.machine_player_1.pick_question_brain.current_state_net(state)
@@ -183,8 +191,6 @@ for key, value in all_possible_characters.items():
     if len(value) != 27:
         print(key+" does not have the right number of attributes")
 
+
 trainer = MachineTrainer()
 trainer.train()
-
-if TRAINING:
-    torch.save(trainer.machine_player_1.pick_question_brain.current_state_net, "./machineBrain/trainedNet.pt")

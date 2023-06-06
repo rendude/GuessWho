@@ -41,6 +41,7 @@ class MachinePlayer():
         else:
             self.assign_char()
         self.take_answer_brain.reset()
+        self.pick_question_brain.reset()
         self.game_status = 0
         self.total_questions_asked=0
     

@@ -10,7 +10,7 @@ import torch.optim as optim
 
 EPS_START = 1
 EPS_END = 0.01
-EPS_DECAY = 0.000001
+EPS_DECAY = 0.0001
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,10 +21,16 @@ class DNN(nn.Module):
         # DNN setup
         self.fc1 = nn.Linear(in_features=len(all_possible_characters), 
             out_features=64)
+        self.fc2 = nn.Linear(in_features=64, 
+            out_features=64)
+        self.fc3 = nn.Linear(in_features=64, 
+            out_features=64)
         self.out = nn.Linear(in_features=64, out_features=len(possible_actions))
 
     def forward(self, t):
         t = F.relu(self.fc1(t))
+        t = F.relu(self.fc2(t))
+        t = F.relu(self.fc3(t))
         t = self.out(t)
         return t
 
@@ -36,7 +42,11 @@ class PickQuestionDNN():
         self.current_state_net = None
         self.asks_randomly = asks_randomly
         self.optimizer = None
+        self.questions_picked_already = set()
         self.loadNN()
+
+    def reset(self):
+        self.questions_picked_already = set()
 
     def get_exploration_rate(self, time_step):
         return EPS_END + (EPS_START - EPS_END) * math.exp(-1 * time_step * EPS_DECAY)
@@ -77,7 +87,7 @@ class PickQuestionDNN():
             self.current_state_net = DNN(self.possible_actions).to(device)
             self.next_state_net = DNN(self.possible_actions).to(device)
 
-        self.optimizer = optim.SGD(params=self.current_state_net.parameters(), lr=0.001)
+        self.optimizer = optim.SGD(params=self.current_state_net.parameters(), lr=0.01)
 
     def pick_random_question_index(self):
         question_index = random.randrange(len(self.possible_actions))
@@ -91,12 +101,24 @@ class PickQuestionDNN():
         if self.asks_randomly or exploration_rate > random.random():
             # Do a random action. Action is the index number of the interview questions
             question_index = self.pick_random_question_index()
+
+            if question_index in self.questions_picked_already:
+                return self.pick_next_question(state)
+            else:
+                self.questions_picked_already.add(question_index)
+
             return torch.tensor([question_index]).to(device), self.possible_actions[question_index]
         else:
             with torch.no_grad():
                 # Give the action with the highest estimated q-value
                 qvalues = self.current_state_net(state)
                 question_index = torch.argmax(qvalues)
+
+                if question_index in self.questions_picked_already:
+                    return self.pick_next_question(state)
+                else:
+                    self.questions_picked_already.add(question_index)
+
                 return question_index, self.possible_actions[question_index]
 
     def update_weights(self, current_states, actions, next_states, game_status):
@@ -110,8 +132,9 @@ class PickQuestionDNN():
 
         rewards = torch.full_like(actions, -1)
         for i in range(len(next_states)):
-            num_eliminated = len(all_possible_characters) - torch.sum(next_states[i])
-            rewards[i] = num_eliminated
+            num_eliminated = torch.sum(current_states[i]) - torch.sum(next_states[i])
+            if num_eliminated > 0:
+                rewards[i] = num_eliminated
 
         # rewards = torch.tensor([num_eliminated])
 
@@ -119,6 +142,7 @@ class PickQuestionDNN():
         target_q_values = rewards + 0.7 * next_q_values
 
         if DEBUG_MODE:
+            print(f'Rewards are {rewards}')
             print(f'Current qs are {self.current_state_net(current_states)}')
             print(f"Action is {actions}")
             print("Current Q Values are "+str(current_q_a_values))
@@ -140,6 +164,7 @@ class PickQuestionDNN():
     def swap_neural_nets_for_stabilitiy(self, net=None):
         if net:
             self.next_state_net.load_state_dict(net)
+            self.current_state_net.load_state_dict(net)
         else:
             self.next_state_net.load_state_dict(
                self.current_state_net.state_dict()
